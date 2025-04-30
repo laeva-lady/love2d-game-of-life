@@ -1,6 +1,6 @@
 # game of life
 
 
-# TODO
+## TODO
 - change zoom mechanic to change cellsize instead of scaling
 
