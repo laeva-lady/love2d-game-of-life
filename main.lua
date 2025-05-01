@@ -73,10 +73,10 @@ end
 function love.wheelmoved(_, y)
     if y > 0 then
         game.state.cell.target_size =
-            game.state.cell.target_size + game.state.cell.changeDelta
+            game.state.cell.target_size + game.state.cell.changedDelta
     elseif y < 0 then
         game.state.cell.target_size =
-            game.state.cell.target_size - game.state.cell.changeDelta
+            game.state.cell.target_size - game.state.cell.changedDelta
     end
 
     -- Clamp zoom to a reasonable range
@@ -101,7 +101,6 @@ end
 
 -- camera updates in real time but the cells update at a fixed interval
 function love.update(dt)
-    Debug()
     game.state.screen.width, game.state.screen.height = love.graphics.getDimensions()
     game.state.cell:update(dt)
 
@@ -185,12 +184,4 @@ function love.draw()
     love.graphics.print(string.format("FPS : %s", flooredFPS()), 10, offset + step * 1)
     love.graphics.print(string.format("%s", FPS), 10, offset + step * 2)
     love.graphics.print(string.format("cell size : %.3f", game.state.cell.size), 10, offset + step * 3)
-end
-
-function Debug()
-    -- for x, col in pairs(game.state.cells) do
-    --     for y, _ in pairs(col) do
-    --         print(x, y, game.state.cells[x][y], game.state.camera.zoom, game.state.camera.x, game.state.camera.y)
-    --     end
-    -- end
 end

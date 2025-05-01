@@ -119,19 +119,19 @@ function game.drawGrid()
 end
 
 function game.DrawCursor()
-    local cellsize = game.state.cell.size
+    local cellsize   = game.state.cell.size
 
-    local camX     = game.state.camera.x
-    local camY     = game.state.camera.y
-    local screenW  = game.state.screen.width
-    local screenH  = game.state.screen.height
-    local x = game.state.mouse.x
-    local y = game.state.mouse.y
+    local camX       = game.state.camera.x
+    local camY       = game.state.camera.y
+    local screenW    = game.state.screen.width
+    local screenH    = game.state.screen.height
+    local x          = game.state.mouse.x
+    local y          = game.state.mouse.y
 
-    local worldX   = camX + (x - screenW / 2)
-    local worldY   = camY + (y - screenH / 2)
+    local worldX     = camX + (x - screenW / 2)
+    local worldY     = camY + (y - screenH / 2)
 
-    local gx, gy = game.ConvertMapPos2GridPos(worldX, worldY)
+    local gx, gy     = game.ConvertMapPos2GridPos(worldX, worldY)
 
     local mapX, mapY = GetScreenPosFromGrid(gx, gy)
 
@@ -240,13 +240,35 @@ game.state = {
     cell = {
         size = 50,
         min_size = 1,
-        max_size = 100,
+        max_size = 150,
         target_size = 50,
         changeDelta = 1,
+        changedDelta = 1,
         trace_lifetime = 10,
+        mathfun = function (x)
+            local h, k = 1, 1
+            return 1e-3 * (x - h)^2 + k
+        end,
         update = function(self, dt)
-            local smoothing = 5
+            local smoothing = 10
             local difference = (self.target_size - self.size) * dt * smoothing
+
+            local x = self.size
+            self.changedDelta = self.changeDelta * self.mathfun(x)
+
+            print(self.changeDelta, self.changedDelta)
+
+
+            -- local str = tostring(difference)
+            -- if str ~= "nan" then
+            --     print(str)
+            -- end
+
+            if math.abs(difference) < 1e-4 then
+                difference = 0
+                self.target_size = self.size
+            end
+
             self.size = self.size + difference
         end
     },
