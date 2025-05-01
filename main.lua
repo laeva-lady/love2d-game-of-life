@@ -8,6 +8,13 @@ game.NewCell(2, 3)
 game.NewCell(2, 4)
 game.NewCell(2, 5)
 
+-- Add this near the top with other game state
+local targetZoomPoint = {
+    x = 0,
+    y = 0,
+    active = false
+}
+
 function love.load()
     love.window.setMode(game.state.screen.width, game.state.screen.height, {
         fullscreen = false,
@@ -71,12 +78,11 @@ function HandleMouseAction(x, y)
 end
 
 function love.wheelmoved(_, y)
+    -- Update target size
     if y > 0 then
-        game.state.cell.target_size =
-            game.state.cell.target_size + game.state.cell.changedDelta
+        game.state.cell.target_size = game.state.cell.target_size + game.state.cell.changedDelta
     elseif y < 0 then
-        game.state.cell.target_size =
-            game.state.cell.target_size - game.state.cell.changedDelta
+        game.state.cell.target_size = game.state.cell.target_size - game.state.cell.changedDelta
     end
 
     -- Clamp zoom to a reasonable range
@@ -102,6 +108,7 @@ end
 -- camera updates in real time but the cells update at a fixed interval
 function love.update(dt)
     game.state.screen.width, game.state.screen.height = love.graphics.getDimensions()
+
     game.state.cell:update(dt)
 
     local dx, dy = 0, 0
@@ -121,7 +128,6 @@ function love.update(dt)
     local camSpeed = 300
     game.state.camera.x = game.state.camera.x + dx * camSpeed * dt
     game.state.camera.y = game.state.camera.y + dy * camSpeed * dt
-
 
     if love.keyboard.isDown(game.options.keys.fps_up) then
         FPS = FPS + 0.1

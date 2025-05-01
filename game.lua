@@ -29,6 +29,13 @@ function GetScreenPosFromGrid(grid_x, grid_y)
     return screen_x, screen_y
 end
 
+function game.ConvertScreen2Map(mx, my)
+    local sx = mx * game.state.cell.size + game.state.screen.width
+    local sy = my * game.state.cell.size + game.state.screen.height
+
+    return sx, sy
+end
+
 --- cells use the grid for their position
 --- @param grid_x number
 --- @param grid_y number
@@ -207,7 +214,8 @@ function game.updateGame()
                         local neighbours = getNeighbours(nx, ny)
                         local alive = isAlive(nx, ny)
 
-                        if (alive and (neighbours == 2 or neighbours == 3)) or (not alive and neighbours == 3) then
+                        if (alive and (neighbours == 2 or neighbours == 3))
+                            or (not alive and neighbours == 3) then
                             newCells[nx] = newCells[nx] or {}
                             newCells[nx][ny] = true
                         end
@@ -245,9 +253,9 @@ game.state = {
         changeDelta = 1,
         changedDelta = 1,
         trace_lifetime = 10,
-        mathfun = function (x)
+        mathfun = function(x)
             local h, k = 1, 1
-            return 1e-3 * (x - h)^2 + k
+            return 1e-3 * (x - h) ^ 2 + k
         end,
         update = function(self, dt)
             local smoothing = 10
@@ -255,9 +263,6 @@ game.state = {
 
             local x = self.size
             self.changedDelta = self.changeDelta * self.mathfun(x)
-
-            print(self.changeDelta, self.changedDelta)
-
 
             -- local str = tostring(difference)
             -- if str ~= "nan" then
