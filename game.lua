@@ -5,7 +5,7 @@ local game = {}
 --- @param grid_y number
 --- @return number, number
 function ConvertGridPos2MapPos(grid_x, grid_y)
-    local cellsize = game.state.options.cellsize
+    local cellsize = game.state.cell.size
     local map_x = grid_x * cellsize
     local map_y = grid_y * cellsize
     return map_x, map_y
@@ -16,7 +16,7 @@ end
 --- @param map_y number
 --- @return number, number
 function game.ConvertMapPos2GridPos(map_x, map_y)
-    local cellsize = game.state.options.cellsize
+    local cellsize = game.state.cell.size
     local grid_x = math.floor(map_x / cellsize)
     local grid_y = math.floor(map_y / cellsize)
     return grid_x, grid_y
@@ -57,12 +57,14 @@ function game.drawCell()
         for x, col in pairs(game.state.traces) do
             for y, age in pairs(col) do
                 local screen_x, screen_y = GetScreenPosFromGrid(x, y)
-                local alpha = math.max(0, 1 - (age / game.state.options.trace_lifetime))
+                local alpha = math.max(0, 1 - (age / game.state.cell.trace_lifetime))
                 love.graphics.setColor(1, 1, 1, alpha * 0.5)
-                love.graphics.rectangle("fill", screen_x, screen_y, game.state.options.cellsize
-                    -- * game.state.camera.zoom
-                    ,
-                    game.state.options.cellsize -- * game.state.camera.zoom
+                love.graphics.rectangle(
+                    "fill",
+                    screen_x,
+                    screen_y,
+                    game.state.cell.size,
+                    game.state.cell.size
                 )
             end
         end
@@ -73,27 +75,29 @@ function game.drawCell()
     for x, col in pairs(game.state.cells) do
         for y, _ in pairs(col) do
             local screen_x, screen_y = GetScreenPosFromGrid(x, y)
-            love.graphics.rectangle("fill", screen_x, screen_y, game.state.options.cellsize
-                -- * game.state.camera.zoom
-                ,
-                game.state.options.cellsize
-            -- * game.state.camera.zoom
+            love.graphics.rectangle(
+                "fill",
+                screen_x,
+                screen_y,
+                game.state.cell.size,
+                game.state.cell.size
             )
         end
     end
 end
 
 function game.drawGrid()
-    if game.state.camera.zoom < 0.7 then
+    if game.state.cell.size < 20 then
         return
     end
-    local cellsize = game.state.options.cellsize
-    local screen_width, screen_height = love.graphics.getDimensions()
+    local screen_width = game.state.screen.width
+    local screen_height = game.state.screen.height
 
-    local start_x = math.floor((game.state.camera.x - screen_width) / cellsize)
-    local end_x = math.ceil((game.state.camera.x + screen_width) / cellsize)
-    local start_y = math.floor((game.state.camera.y - screen_height) / cellsize)
-    local end_y = math.ceil((game.state.camera.y + screen_height) / cellsize)
+    local start_x = math.floor(game.state.camera.x - screen_width)
+    local end_x = math.ceil(game.state.camera.x + screen_width)
+
+    local start_y = math.floor(game.state.camera.y - screen_height)
+    local end_y = math.ceil(game.state.camera.y + screen_height)
 
     -- Set grid color (slightly darker than white)
     love.graphics.setColor(0.3, 0.3, 0.3, 0.5)
@@ -115,14 +119,23 @@ function game.drawGrid()
 end
 
 function game.DrawCursor()
-    local cellsize       = game.state.options.cellsize
+    local cellsize = game.state.cell.size
 
-    local mx             = game.state.mouse.x + game.state.camera.x + 10
-    local my             = game.state.mouse.y + game.state.camera.y - 10
-    local grid_x, grid_y = game.ConvertMapPos2GridPos(mx, my)
-    local map_x, map_y   = GetScreenPosFromGrid(grid_x, grid_y)
+    local camX     = game.state.camera.x
+    local camY     = game.state.camera.y
+    local screenW  = game.state.screen.width
+    local screenH  = game.state.screen.height
+    local x = game.state.mouse.x
+    local y = game.state.mouse.y
 
-    if isAlive(grid_x - 13, grid_y - 7) then -- no idea what these magic numbers are...
+    local worldX   = camX + (x - screenW / 2)
+    local worldY   = camY + (y - screenH / 2)
+
+    local gx, gy = game.ConvertMapPos2GridPos(worldX, worldY)
+
+    local mapX, mapY = GetScreenPosFromGrid(gx, gy)
+
+    if isAlive(gx, gy) then             -- no idea what these magic numbers are...
         love.graphics.setColor(0, 0, 1) -- Blue
         love.graphics.setLineWidth(10)
     else
@@ -131,8 +144,8 @@ function game.DrawCursor()
     end
 
     love.graphics.rectangle("line",
-        map_x - 10,
-        map_y + 10,
+        mapX + screenW / 2,
+        mapY + screenH / 2,
         cellsize,
         cellsize,
         5
@@ -165,7 +178,7 @@ function game.updateGame()
         local newTraces = {}
         for x, col in pairs(game.state.traces) do
             for y, age in pairs(col) do
-                if age < game.state.options.trace_lifetime then
+                if age < game.state.cell.trace_lifetime then
                     newTraces[x] = newTraces[x] or {}
                     newTraces[x][y] = age + 1
                 end
@@ -207,23 +220,35 @@ function game.updateGame()
     game.state.cells = newCells
 end
 
+game.options = {
+    keys = {
+        up = "w",
+        left = "a",
+        down = "r",
+        right = "s",
+        fps_up = "f",
+        fps_down = "q",
+    }
+}
+
 game.state = {
     paused = false,
-    options = {
-        screen = {
-            width = 1280,
-            height = 720
-        },
-        cellsize = 50,
-        trace_lifetime = 10, -- Number of frames a trace will last
-        keys = {
-            up = "w",
-            left = "a",
-            down = "r",
-            right = "s",
-            fps_up = "f",
-            fps_down = "q",
-        }
+    screen = {
+        width = 1280,
+        height = 720
+    },
+    cell = {
+        size = 50,
+        min_size = 1,
+        max_size = 100,
+        target_size = 50,
+        changeDelta = 1,
+        trace_lifetime = 10,
+        update = function(self, dt)
+            local smoothing = 5
+            local difference = (self.target_size - self.size) * dt * smoothing
+            self.size = self.size + difference
+        end
     },
     mouse = {
         x = 0,
@@ -232,22 +257,6 @@ game.state = {
     camera = {
         x = 0,
         y = 0,
-        zoom = 1,
-        target_zoom = 1,
-        zoom_delta = 0.1,
-        min_zoom = 0.1,
-        max_zoom = 5,
-        update = function(self, dt)
-            local zoom_smoothing = 5
-
-            local dilf = (self.target_zoom - self.zoom) * dt * zoom_smoothing
-            if math.abs(dilf) < 0.00000005 then
-                dilf = 0
-                self.zoom = self.target_zoom
-            else
-                self.zoom = self.zoom + dilf
-            end
-        end
     },
     cells = {},
     traces = {} -- New field to store cell traces

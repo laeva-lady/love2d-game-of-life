@@ -9,7 +9,7 @@ game.NewCell(2, 4)
 game.NewCell(2, 5)
 
 function love.load()
-    love.window.setMode(game.state.options.screen.width, game.state.options.screen.height, {
+    love.window.setMode(game.state.screen.width, game.state.screen.height, {
         fullscreen = false,
         vsync = false,
         resizable = true,
@@ -20,10 +20,6 @@ end
 function love.keypressed(key)
     if key == "escape" then love.event.quit() end
     if key == "space" then game.state.paused = not game.state.paused end
-    if key == "lctrl" then
-        game.state.camera.zoom = 1
-        game.state.camera.target_zoom = 1
-    end
 end
 
 local mouseDown = false
@@ -55,8 +51,8 @@ function HandleMouseAction(x, y)
     if game.state.paused then
         local camX    = game.state.camera.x
         local camY    = game.state.camera.y
-        local screenW = game.state.options.screen.width
-        local screenH = game.state.options.screen.height
+        local screenW = game.state.screen.width
+        local screenH = game.state.screen.height
         local worldX  = camX + (x - screenW / 2)
         local worldY  = camY + (y - screenH / 2)
 
@@ -76,18 +72,20 @@ end
 
 function love.wheelmoved(_, y)
     if y > 0 then
-        game.state.camera.target_zoom = game.state.camera.target_zoom + game.state.camera.zoom_delta
+        game.state.cell.target_size =
+            game.state.cell.target_size + game.state.cell.changeDelta
     elseif y < 0 then
-        game.state.camera.target_zoom = game.state.camera.target_zoom - game.state.camera.zoom_delta
+        game.state.cell.target_size =
+            game.state.cell.target_size - game.state.cell.changeDelta
     end
 
     -- Clamp zoom to a reasonable range
-    game.state.camera.target_zoom =
+    game.state.cell.target_size =
         math.max(
-            game.state.camera.min_zoom,
+            game.state.cell.min_size,
             math.min(
-                game.state.camera.max_zoom,
-                game.state.camera.target_zoom
+                game.state.cell.max_size,
+                game.state.cell.target_size
             )
         )
 end
@@ -104,19 +102,15 @@ end
 -- camera updates in real time but the cells update at a fixed interval
 function love.update(dt)
     Debug()
-    game.state.options.screen.width, game.state.options.screen.height = love.graphics.getDimensions()
-    game.state.camera:update(dt)
-    if game.state.paused then
-        game.state.camera.zoom = 1
-        game.state.camera.target_zoom = 1
-    end
+    game.state.screen.width, game.state.screen.height = love.graphics.getDimensions()
+    game.state.cell:update(dt)
 
     local dx, dy = 0, 0
 
-    if love.keyboard.isDown(game.state.options.keys.up) then dy = dy - 1 end
-    if love.keyboard.isDown(game.state.options.keys.down) then dy = dy + 1 end
-    if love.keyboard.isDown(game.state.options.keys.left) then dx = dx - 1 end
-    if love.keyboard.isDown(game.state.options.keys.right) then dx = dx + 1 end
+    if love.keyboard.isDown(game.options.keys.up) then dy = dy - 1 end
+    if love.keyboard.isDown(game.options.keys.down) then dy = dy + 1 end
+    if love.keyboard.isDown(game.options.keys.left) then dx = dx - 1 end
+    if love.keyboard.isDown(game.options.keys.right) then dx = dx + 1 end
 
     -- Normalize direction
     local length = math.sqrt(dx * dx + dy * dy)
@@ -125,16 +119,16 @@ function love.update(dt)
         dy = dy / length
     end
 
-    local camSpeed = 1000 / (game.state.camera.zoom ^ 1.2)
+    local camSpeed = 300
     game.state.camera.x = game.state.camera.x + dx * camSpeed * dt
     game.state.camera.y = game.state.camera.y + dy * camSpeed * dt
 
 
-    if love.keyboard.isDown(game.state.options.keys.fps_up) then
+    if love.keyboard.isDown(game.options.keys.fps_up) then
         FPS = FPS + 0.1
         FPS = math.min(120, FPS)
     end
-    if love.keyboard.isDown(game.state.options.keys.fps_down) then
+    if love.keyboard.isDown(game.options.keys.fps_down) then
         FPS = FPS - 0.1
         FPS = math.max(1, FPS) -- Allow for intervals up to 10 seconds
     end
@@ -152,8 +146,7 @@ end
 function love.draw()
     -- screen (camera.pos)
     love.graphics.push()
-    love.graphics.translate(game.state.options.screen.width / 2, game.state.options.screen.height / 2)
-    love.graphics.scale(game.state.camera.zoom, game.state.camera.zoom)
+    love.graphics.translate(game.state.screen.width / 2, game.state.screen.height / 2)
 
     -- draw game
     game.drawCell()
@@ -162,15 +155,12 @@ function love.draw()
     -- screen (0, 0)
     love.graphics.pop()
 
-    -- TODO : figure out what's wrong
-    if game.state.camera.zoom == 1 then
-        game.DrawCursor()
-    end
+    game.DrawCursor()
 
 
     -- draw camera pointer
     love.graphics.setColor(1, 0, 0)
-    love.graphics.circle("fill", game.state.options.screen.width / 2, game.state.options.screen.height / 2, 2.5)
+    love.graphics.circle("fill", game.state.screen.width / 2, game.state.screen.height / 2, 2.5)
 
     -- print coordinate of camera
     love.graphics.print(
@@ -178,13 +168,13 @@ function love.draw()
             "%.2f ; %.2f",
             game.state.camera.x,
             game.state.camera.y
-        ), 50, game.state.options.screen.height - 50)
+        ), 50, game.state.screen.height - 100)
     local cxg, cyg = game.ConvertMapPos2GridPos(game.state.camera.x, game.state.camera.y)
     love.graphics.print(
         string.format(
             "%.2f ; %.2f",
             cxg, cyg
-        ), 50, game.state.options.screen.height - 100)
+        ), 50, game.state.screen.height - 50)
     love.graphics.setColor(1, 1, 1)
 
     -- show infos
@@ -194,7 +184,7 @@ function love.draw()
     love.graphics.print(string.format("Paused : %s", game.state.paused), 10, offset + step * 0)
     love.graphics.print(string.format("FPS : %s", flooredFPS()), 10, offset + step * 1)
     love.graphics.print(string.format("%s", FPS), 10, offset + step * 2)
-    love.graphics.print(string.format("zoom : %.3f", game.state.camera.zoom), 10, offset + step * 3)
+    love.graphics.print(string.format("cell size : %.3f", game.state.cell.size), 10, offset + step * 3)
 end
 
 function Debug()
