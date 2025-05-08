@@ -42,31 +42,29 @@ end
 function love.mousemoved(x, y, _, _)
     game.state.mouse.x = x
     game.state.mouse.y = y
-    if mouseDown and game.state.paused then
+    if mouseDown then
         HandleMouseAction(x, y)
     end
 end
 
 function HandleMouseAction(x, y)
-    if game.state.paused then
-        local camX    = game.state.camera.x
-        local camY    = game.state.camera.y
-        local screenW = game.state.screen.width
-        local screenH = game.state.screen.height
-        local worldX  = camX + (x - screenW / 2)
-        local worldY  = camY + (y - screenH / 2)
+    local camX    = game.state.camera.x
+    local camY    = game.state.camera.y
+    local screenW = game.state.screen.width
+    local screenH = game.state.screen.height
+    local worldX  = camX + (x - screenW / 2)
+    local worldY  = camY + (y - screenH / 2)
 
 
-        local gx, gy = game.ConvertMapPos2GridPos(worldX, worldY)
+    local gx, gy = game.ConvertMapPos2GridPos(worldX, worldY)
 
-        if gx == lastCellX and gy == lastCellY then return end
-        lastCellX, lastCellY = gx, gy
+    if gx == lastCellX and gy == lastCellY then return end
+    lastCellX, lastCellY = gx, gy
 
-        if game.state.cells[gx] and game.state.cells[gx][gy] then
-            game.KillCell(gx, gy)
-        else
-            game.NewCell(gx, gy)
-        end
+    if game.state.cells[gx] and game.state.cells[gx][gy] then
+        game.KillCell(gx, gy)
+    else
+        game.NewCell(gx, gy)
     end
 end
 

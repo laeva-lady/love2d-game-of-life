@@ -151,7 +151,7 @@ function game.DrawCursor()
 
     local mapX, mapY = GetScreenPosFromGrid(gx, gy)
 
-    if isAlive(gx, gy) then             -- no idea what these magic numbers are...
+    if isAlive(gx, gy) then
         love.graphics.setColor(0, 0, 1) -- Blue
         love.graphics.setLineWidth(10)
     else
@@ -244,7 +244,7 @@ game.options = {
         down = "r",
         right = "s",
         fps_up = "f",
-        fps_down = "q",
+        fps_down = "q"
     }
 }
 
@@ -259,8 +259,8 @@ game.state = {
         min_size = 1,
         max_size = 150,
         target_size = 50,
-        changeDelta = 1,
-        changedDelta = 1,
+        changeDelta = 1, -- constant is the default delta with which cell.size will change
+        changedDelta = 1, -- modified delta from the cell.mathfun to scale delta
         trace_lifetime = 30,
         mathfun = function(x)
             local h, k = 1, 1
