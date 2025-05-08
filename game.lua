@@ -101,39 +101,6 @@ function game.drawCell()
     end
 end
 
--- fix the grid following the player
-function game.drawGrid()
-    if game.state.cell.size < 20 then
-        return
-    end
-    local screen_width = game.state.screen.width
-    local screen_height = game.state.screen.height
-
-    local start_x = math.floor(game.state.camera.x - screen_width)
-    local end_x = math.ceil(game.state.camera.x + screen_width)
-
-    local start_y = math.floor(game.state.camera.y - screen_height)
-    local end_y = math.ceil(game.state.camera.y + screen_height)
-
-    -- Set grid color (slightly darker than white)
-    love.graphics.setColor(0.3, 0.3, 0.3, 0.5)
-
-    -- Draw vertical lines
-    for x = start_x, end_x do
-        local screen_x, _ = GetScreenPosFromGrid(x, 0)
-        love.graphics.line(screen_x, -screen_height, screen_x, screen_height)
-    end
-
-    -- Draw horizontal lines
-    for y = start_y, end_y do
-        local _, screen_y = GetScreenPosFromGrid(0, y)
-        love.graphics.line(-screen_width, screen_y, screen_width, screen_y)
-    end
-
-    -- Reset color
-    love.graphics.setColor(1, 1, 1, 1)
-end
-
 function game.DrawCursor()
     local cellsize   = game.state.cell.size
 

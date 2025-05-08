@@ -146,7 +146,6 @@ function love.draw()
 
     -- draw game
     game.drawCell()
-    game.drawGrid()
 
     local x1, y1 = GetScreenPosFromGrid(0, 0)
     local x2, y2 = GetScreenPosFromGrid(0, 1000)
