@@ -8,13 +8,6 @@ game.NewCell(2, 3)
 game.NewCell(2, 4)
 game.NewCell(2, 5)
 
--- Add this near the top with other game state
-local targetZoomPoint = {
-    x = 0,
-    y = 0,
-    active = false
-}
-
 function love.load()
     love.window.setMode(game.state.screen.width, game.state.screen.height, {
         fullscreen = false,
@@ -156,6 +149,12 @@ function love.draw()
     -- draw game
     game.drawCell()
     game.drawGrid()
+
+    local x1, y1 = GetScreenPosFromGrid(0, 0)
+    local x2, y2 = GetScreenPosFromGrid(0, 1000)
+    love.graphics.line(x1, y1, x2, y2)
+    x2, y2 = GetScreenPosFromGrid(1000, 0)
+    love.graphics.line(x1, y1, x2, y2)
 
     -- screen (0, 0)
     love.graphics.pop()

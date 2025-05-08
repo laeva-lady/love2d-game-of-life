@@ -22,6 +22,9 @@ function game.ConvertMapPos2GridPos(map_x, map_y)
     return grid_x, grid_y
 end
 
+--- @param grid_x number
+--- @param grid_y number
+--- @return number screen_x, number screen_y
 function GetScreenPosFromGrid(grid_x, grid_y)
     local map_x, map_y = ConvertGridPos2MapPos(grid_x, grid_y)
     local screen_x = (map_x - game.state.camera.x)
@@ -29,6 +32,9 @@ function GetScreenPosFromGrid(grid_x, grid_y)
     return screen_x, screen_y
 end
 
+--- @param mx number
+--- @param my number
+--- @return number sx, number sy
 function game.ConvertScreen2Map(mx, my)
     local sx = mx * game.state.cell.size + game.state.screen.width
     local sy = my * game.state.cell.size + game.state.screen.height
@@ -44,6 +50,8 @@ function game.NewCell(grid_x, grid_y)
     game.state.cells[grid_x][grid_y] = true
 end
 
+--- @param grid_x number
+--- @param grid_y number
 function game.KillCell(grid_x, grid_y)
     if game.state.cells[grid_x] then
         game.state.cells[grid_x][grid_y] = nil
@@ -93,6 +101,7 @@ function game.drawCell()
     end
 end
 
+-- fix the grid following the player
 function game.drawGrid()
     if game.state.cell.size < 20 then
         return
@@ -252,7 +261,7 @@ game.state = {
         target_size = 50,
         changeDelta = 1,
         changedDelta = 1,
-        trace_lifetime = 10,
+        trace_lifetime = 30,
         mathfun = function(x)
             local h, k = 1, 1
             return 1e-3 * (x - h) ^ 2 + k
@@ -263,11 +272,6 @@ game.state = {
 
             local x = self.size
             self.changedDelta = self.changeDelta * self.mathfun(x)
-
-            -- local str = tostring(difference)
-            -- if str ~= "nan" then
-            --     print(str)
-            -- end
 
             if math.abs(difference) < 1e-4 then
                 difference = 0
@@ -286,7 +290,7 @@ game.state = {
         y = 0,
     },
     cells = {},
-    traces = {} -- New field to store cell traces
+    traces = {}
 }
 
 return game
